@@ -4,6 +4,7 @@ import (
 	"github.com/joho/godotenv"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -12,11 +13,17 @@ import (
 var zone *time.Location
 
 func init() {
-	err := godotenv.Load("app.env")
+	path, err := os.Executable()
+	if err != nil {
+		log.Fatal("Error loading app.env file")
+	}
+	dir := filepath.Dir(path)
+	err = godotenv.Load(dir + "/app.env")
 	if err != nil {
 		log.Fatal("Error loading app.env file")
 	}
 }
+
 
 /**
 获取字符串
