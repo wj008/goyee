@@ -1,4 +1,4 @@
-module yee
+module goyee
 
 go 1.17
 

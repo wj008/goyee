@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"errors"
 	_ "github.com/go-sql-driver/mysql"
+	"goyee/config"
 	"log"
 	"strings"
 	"time"
-	"yee/config"
 )
 
 type H = map[string]interface{}

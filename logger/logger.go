@@ -2,12 +2,12 @@ package logger
 
 import (
 	"fmt"
+	"goyee/config"
 	"io"
 	"log"
 	"os"
 	"strings"
 	"time"
-	"yee/config"
 )
 
 type LogSet struct {
