@@ -14,6 +14,7 @@ import (
 type Conn struct {
 	net.Conn
 	Id        string
+	IsConnect bool
 	closeFunc func()
 }
 
@@ -206,6 +207,7 @@ func (c *Conn) Close() error {
 	if c.closeFunc != nil {
 		c.closeFunc()
 	}
+	c.IsConnect = false
 	return c.Conn.Close()
 }
 
@@ -214,7 +216,7 @@ func wrapConn(conn net.Conn, id string) *Conn {
 	case *Conn:
 		return c
 	case *net.TCPConn:
-		return &Conn{conn, id, nil}
+		return &Conn{conn, id, true, nil}
 	}
 	return nil
 }
