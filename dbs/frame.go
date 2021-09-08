@@ -3,7 +3,7 @@ package dbs
 import (
 	"encoding/json"
 	"errors"
-	"goyee/config"
+	"github.com/wj008/goyee/config"
 	"strconv"
 	"strings"
 	"time"

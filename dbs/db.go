@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	_ "github.com/go-sql-driver/mysql"
-	"goyee/config"
+	"github.com/wj008/goyee/config"
 	"log"
 	"strings"
 	"time"

@@ -2,7 +2,7 @@ package logger
 
 import (
 	"fmt"
-	"goyee/config"
+	"github.com/wj008/goyee/config"
 	"io"
 	"log"
 	"os"
