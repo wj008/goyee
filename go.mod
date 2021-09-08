@@ -1,4 +1,4 @@
-module goyee
+module github.com/wj008/goyee
 
 go 1.17
 
