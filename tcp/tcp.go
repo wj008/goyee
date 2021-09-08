@@ -1,9 +1,12 @@
 package tcp
 
 import (
+	"bytes"
+	"compress/gzip"
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 )
@@ -81,6 +84,41 @@ func (c *Conn) WriteMsg(buffer []byte) (err error) {
 	return nil
 }
 
+func gzipEncode(data []byte) ([]byte, error) {
+	var buffer bytes.Buffer
+	writer, _ := gzip.NewWriterLevel(&buffer, gzip.BestCompression)
+	_, err := writer.Write(data)
+	if err != nil {
+		writer.Close()
+		writer.Flush()
+		return buffer.Bytes(), nil
+	}
+	writer.Close()
+	return nil, err
+}
+
+func gzipDecode(data []byte) ([]byte, error) {
+	reader, err := gzip.NewReader(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+	return ioutil.ReadAll(reader)
+}
+
+func (c *Conn) WriteZip(data []byte) (err error) {
+	if data == nil {
+		c.WriteMsg(data)
+		return
+	}
+	data, err = gzipEncode(data)
+	if err != nil {
+		return
+	}
+	c.WriteMsg(data)
+	return
+}
+
 //ReadMsg 读取消息
 func (c *Conn) ReadMsg() (buffer []byte, err error) {
 	var sz int32
@@ -129,6 +167,30 @@ func (c *Conn) OnData(f func(data []byte)) {
 				log.Println(err)
 				c.Close()
 				return
+			}
+			go f(data)
+		}
+	}()
+}
+
+//OnDataZip 读取消息
+func (c *Conn) OnDataZip(f func(data []byte)) {
+	go func() {
+		for {
+			data, err := c.ReadMsg()
+			if err != nil {
+				log.Println(err)
+				c.Close()
+				return
+			}
+			if len(data) == 0 {
+				go f(data)
+				continue
+			}
+			data, err = gzipEncode(data)
+			if err != nil {
+				log.Println(err)
+				continue
 			}
 			go f(data)
 		}
