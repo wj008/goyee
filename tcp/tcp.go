@@ -84,20 +84,20 @@ func (c *Conn) WriteMsg(buffer []byte) (err error) {
 	return nil
 }
 
-func gzipEncode(data []byte) ([]byte, error) {
+func GzipEncode(data []byte) ([]byte, error) {
 	var buffer bytes.Buffer
 	writer, _ := gzip.NewWriterLevel(&buffer, gzip.BestCompression)
 	_, err := writer.Write(data)
-	if err != nil {
-		writer.Close()
-		writer.Flush()
-		return buffer.Bytes(), nil
-	}
 	writer.Close()
-	return nil, err
+	if err != nil {
+		return nil, err
+	}
+	writer.Flush()
+	out := buffer.Bytes()
+	return out, nil
 }
 
-func gzipDecode(data []byte) ([]byte, error) {
+func GzipDecode(data []byte) ([]byte, error) {
 	reader, err := gzip.NewReader(bytes.NewReader(data))
 	if err != nil {
 		return nil, err
@@ -111,7 +111,7 @@ func (c *Conn) WriteZip(data []byte) (err error) {
 		c.WriteMsg(data)
 		return
 	}
-	data, err = gzipEncode(data)
+	data, err = GzipEncode(data)
 	if err != nil {
 		return
 	}
@@ -187,7 +187,7 @@ func (c *Conn) OnDataZip(f func(data []byte)) {
 				go f(data)
 				continue
 			}
-			data, err = gzipEncode(data)
+			data, err = GzipDecode(data)
 			if err != nil {
 				log.Println(err)
 				continue
