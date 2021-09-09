@@ -14,6 +14,7 @@ import (
 type Conn struct {
 	net.Conn
 	Id        string
+	Version   string
 	IsConnect bool
 	closeFunc func()
 }
@@ -39,8 +40,7 @@ func NewServer(addr string) (serv *Server, err error) {
 			if err2 != nil {
 				continue
 			}
-			rmAddr := rawConn.RemoteAddr()
-			c := wrapConn(rawConn, rmAddr.String())
+			c := wrapConn(rawConn)
 			serv.Connes <- c
 		}
 	}()
@@ -60,8 +60,7 @@ func NewConn(addr string) (conn *Conn, err error) {
 	if err != nil {
 		return
 	}
-	rmAddr := rawConn.RemoteAddr()
-	conn = wrapConn(rawConn, rmAddr.String())
+	conn = wrapConn(rawConn)
 	return
 }
 
@@ -211,12 +210,12 @@ func (c *Conn) Close() error {
 	return c.Conn.Close()
 }
 
-func wrapConn(conn net.Conn, id string) *Conn {
+func wrapConn(conn net.Conn) *Conn {
 	switch c := conn.(type) {
 	case *Conn:
 		return c
 	case *net.TCPConn:
-		return &Conn{conn, id, true, nil}
+		return &Conn{conn, "", "", true, nil}
 	}
 	return nil
 }
