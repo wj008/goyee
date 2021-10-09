@@ -15,19 +15,18 @@ var zone *time.Location
 func init() {
 	path, err := os.Executable()
 	if err != nil {
-		log.Fatal("Error loading app.env file")
+		log.Println("Error loading app.env file")
+		return
 	}
 	dir := filepath.Dir(path)
 	err = godotenv.Load(dir + "/app.env")
 	if err != nil {
-		log.Fatal("Error loading app.env file")
+		log.Println("Error loading app.env file")
+		return
 	}
 }
 
-
-/**
-获取字符串
-*/
+//String 获取字符串
 func String(key string, def string) string {
 	str := os.Getenv(key)
 	if len(str) == 0 {
@@ -36,9 +35,7 @@ func String(key string, def string) string {
 	return str
 }
 
-/**
-获取整数
-*/
+//Int 获取整数
 func Int(key string, def int) int {
 	str := os.Getenv(key)
 	if len(str) == 0 {
@@ -51,6 +48,7 @@ func Int(key string, def int) int {
 	return val
 }
 
+//Int64 获取整数
 func Int64(key string, def int64) int64 {
 	str := os.Getenv(key)
 	if len(str) == 0 {
@@ -63,9 +61,20 @@ func Int64(key string, def int64) int64 {
 	return val
 }
 
-/**
-获取bool
-*/
+//Float 获取浮点数
+func Float(key string, def float64) float64 {
+	str := os.Getenv(key)
+	if len(str) == 0 {
+		return def
+	}
+	val, err := strconv.ParseFloat(str, 64)
+	if err != nil {
+		return def
+	}
+	return val
+}
+
+//Bool 获取bool
 func Bool(key string, def bool) bool {
 	str := os.Getenv(key)
 	if len(str) == 0 {
@@ -78,9 +87,7 @@ func Bool(key string, def bool) bool {
 	return false
 }
 
-/**
-时区参数
-*/
+//CstZone 时区参数
 func CstZone() *time.Location {
 	if zone != nil {
 		return zone
