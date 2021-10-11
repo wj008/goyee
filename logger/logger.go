@@ -18,6 +18,33 @@ type LogSet struct {
 
 var lm *LogSet = nil
 
+type Logger struct{}
+
+func (n *Logger) Log(v ...interface{}) {
+	Log(v...)
+}
+
+func (n *Logger) Logf(format string, v ...interface{}) {
+	Logf(format, v...)
+}
+
+var (
+	Debug = config.Bool("debug", true)
+)
+
+func Log(v ...interface{}) {
+	if Debug {
+		Println(v...)
+	}
+}
+
+// Logf logs formatted using the default logger
+func Logf(format string, v ...interface{}) {
+	if Debug {
+		Printf(format, v...)
+	}
+}
+
 func SetOutput(template string) {
 	lm = &LogSet{
 		Template: template,
