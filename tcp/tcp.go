@@ -13,9 +13,7 @@ import (
 
 type Conn struct {
 	net.Conn
-	Id        string
-	DeviceId  string
-	Version   string
+	Context   interface{}
 	IsConnect bool
 	closeFunc func()
 }
@@ -216,7 +214,7 @@ func wrapConn(conn net.Conn) *Conn {
 	case *Conn:
 		return c
 	case *net.TCPConn:
-		return &Conn{conn, "", "", "", true, nil}
+		return &Conn{conn, nil, true, nil}
 	}
 	return nil
 }
