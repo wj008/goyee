@@ -9,8 +9,8 @@ type SearchType int32
 
 const (
 	WithoutEmpty SearchType = 0
-	WithoutZero  SearchType = 1
-	WithoutNil   SearchType = 2
+	WithoutZero             = 1
+	WithoutNil              = 2
 )
 
 type Condition struct {
@@ -18,7 +18,8 @@ type Condition struct {
 	items []*Frame
 }
 
-/**
+/*
+*
 创建查询条件
 */
 func NewCondition() *Condition {
@@ -28,10 +29,11 @@ func NewCondition() *Condition {
 	}
 }
 
-/**
+/*
+*
 查询条件
 */
-func (cond *Condition) Where(sql string, args ...interface{}) *Condition {
+func (cond *Condition) Where(sql string, args ...any) *Condition {
 	sql = strings.TrimSpace(sql)
 	if sql == "" {
 		return cond
@@ -62,7 +64,7 @@ func (cond *Condition) WhereC(c *Condition) *Condition {
 	return cond
 }
 
-func (cond *Condition) Search(sql string, value interface{}, typ SearchType) *Condition {
+func (cond *Condition) Search(sql string, value any, typ SearchType) *Condition {
 	isA := false
 	if typ == WithoutZero {
 		switch value.(type) {
@@ -73,19 +75,19 @@ func (cond *Condition) Search(sql string, value interface{}, typ SearchType) *Co
 				return cond
 			}
 		case int64:
-			if value.(int64) == int64(0) {
+			if value.(int64) == 0 {
 				return cond
 			}
 		case uint64:
-			if value.(uint64) == uint64(0) {
+			if value.(uint64) == 0 {
 				return cond
 			}
 		case int32:
-			if value.(int32) == int32(0) {
+			if value.(int32) == 0 {
 				return cond
 			}
 		case uint32:
-			if value.(uint32) == uint32(0) {
+			if value.(uint32) == 0 {
 				return cond
 			}
 		case int:
@@ -93,24 +95,24 @@ func (cond *Condition) Search(sql string, value interface{}, typ SearchType) *Co
 				return cond
 			}
 		case uint:
-			if value.(uint) == uint(0) {
+			if value.(uint) == 0 {
 				return cond
 			}
 		case float64:
-			if value.(float64) == float64(0) {
+			if value.(float64) == 0 {
 				return cond
 			}
 		case float32:
-			if value.(float32) == float32(0) {
+			if value.(float32) == 0 {
 				return cond
 			}
 		case bool:
 			if value.(bool) == false {
 				return cond
 			}
-		case []interface{}:
+		case []any:
 			isA = true
-			if len(value.([]interface{})) == 0 {
+			if len(value.([]any)) == 0 {
 				return cond
 			}
 			break
@@ -128,9 +130,9 @@ func (cond *Condition) Search(sql string, value interface{}, typ SearchType) *Co
 			break
 		case int64, uint64, int32, uint32, int, uint, float64, float32, bool:
 			break
-		case []interface{}:
+		case []any:
 			isA = true
-			if len(value.([]interface{})) == 0 {
+			if len(value.([]any)) == 0 {
 				return cond
 			}
 			break
@@ -143,9 +145,9 @@ func (cond *Condition) Search(sql string, value interface{}, typ SearchType) *Co
 			return cond
 		case string, int64, uint64, int32, uint32, int, uint, float64, float32, bool:
 			break
-		case []interface{}:
+		case []any:
 			isA = true
-			if len(value.([]interface{})) == 0 {
+			if len(value.([]any)) == 0 {
 				return cond
 			}
 			break
@@ -158,7 +160,7 @@ func (cond *Condition) Search(sql string, value interface{}, typ SearchType) *Co
 			return cond
 		}
 		ques := make([]string, 0)
-		args := value.([]interface{})
+		args := value.([]any)
 		aLen := len(args)
 		for i := 0; i < aLen; i++ {
 			ques = append(ques, "?")
@@ -171,7 +173,7 @@ func (cond *Condition) Search(sql string, value interface{}, typ SearchType) *Co
 
 func (cond *Condition) GetFrame() *Frame {
 	sqlItems := make([]string, 0)
-	argItems := make([]interface{}, 0)
+	argItems := make([]any, 0)
 	for _, item := range cond.items {
 		tempSql := item.Sql
 		reg, _ := regexp.Compile(`(?i)^(or|and)\s+`)

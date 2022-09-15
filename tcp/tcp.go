@@ -13,7 +13,7 @@ import (
 
 type Conn struct {
 	net.Conn
-	Context   interface{}
+	Context   any
 	IsConnect bool
 	closeFunc func()
 }
@@ -85,7 +85,7 @@ func GzipDecode(data []byte) ([]byte, error) {
 	return ioutil.ReadAll(reader)
 }
 
-//WriteMsg 写入消息
+// WriteMsg 写入消息
 func (c *Conn) WriteMsg(buffer []byte) (err error) {
 	l := 0
 	if buffer != nil {
@@ -105,7 +105,7 @@ func (c *Conn) WriteMsg(buffer []byte) (err error) {
 	return nil
 }
 
-//WriteZip 压缩并写入消息
+// WriteZip 压缩并写入消息
 func (c *Conn) WriteZip(data []byte) (err error) {
 	if data == nil {
 		c.WriteMsg(data)
@@ -119,7 +119,7 @@ func (c *Conn) WriteZip(data []byte) (err error) {
 	return
 }
 
-//readBytes 读取套接字字节
+// readBytes 读取套接字字节
 func (c *Conn) readBytes(length int) ([]byte, error) {
 	end := length
 	buffer := make([]byte, length)
@@ -148,7 +148,7 @@ func (c *Conn) readBytes(length int) ([]byte, error) {
 	return buffer, nil
 }
 
-//ReadMsg 读取消息
+// ReadMsg 读取消息
 func (c *Conn) ReadMsg() (buffer []byte, err error) {
 	lenBytes, err2 := c.readBytes(4)
 	if err2 != nil {
@@ -163,7 +163,7 @@ func (c *Conn) ReadMsg() (buffer []byte, err error) {
 	return
 }
 
-//OnData 读取消息
+// OnData 读取消息
 func (c *Conn) OnData(f func(data []byte)) {
 	go func() {
 		for {
@@ -178,7 +178,7 @@ func (c *Conn) OnData(f func(data []byte)) {
 	}()
 }
 
-//OnDataZip 读取消息
+// OnDataZip 读取消息
 func (c *Conn) OnDataZip(f func(data []byte)) {
 	go func() {
 		for {
@@ -202,7 +202,7 @@ func (c *Conn) OnDataZip(f func(data []byte)) {
 	}()
 }
 
-//OnClose 监听关闭
+// OnClose 监听关闭
 func (c *Conn) OnClose(f func()) {
 	c.closeFunc = f
 }

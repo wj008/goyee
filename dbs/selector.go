@@ -51,7 +51,7 @@ func DBSelector(table string) (*Selector, error) {
 	return NewSelector(db, table), nil
 }
 
-func (slt *Selector) Field(fields string, args ...interface{}) *Selector {
+func (slt *Selector) Field(fields string, args ...any) *Selector {
 	fields = strings.TrimSpace(fields)
 	if fields == "" {
 		return slt
@@ -59,7 +59,7 @@ func (slt *Selector) Field(fields string, args ...interface{}) *Selector {
 	slt.fields = NewFrame(fields, "field", args...)
 	return slt
 }
-func (slt *Selector) Order(order string, args ...interface{}) *Selector {
+func (slt *Selector) Order(order string, args ...any) *Selector {
 	order = strings.TrimSpace(order)
 	reg, _ := regexp.Compile(`(?i)^(by\s+|,)`)
 	order = reg.ReplaceAllString(order, "")
@@ -86,7 +86,7 @@ func (slt *Selector) Limit(offset int, size int) *Selector {
 	}
 	return slt
 }
-func (slt *Selector) Group(group string, args ...interface{}) *Selector {
+func (slt *Selector) Group(group string, args ...any) *Selector {
 	group = strings.TrimSpace(group)
 	reg, _ := regexp.Compile(`(?i)^(by\s+|,)`)
 	group = reg.ReplaceAllString(group, "")
@@ -101,7 +101,7 @@ func (slt *Selector) Group(group string, args ...interface{}) *Selector {
 	}
 	return slt
 }
-func (slt *Selector) Having(sql string, args ...interface{}) *Selector {
+func (slt *Selector) Having(sql string, args ...any) *Selector {
 	sql = strings.TrimSpace(sql)
 	if sql == "" {
 		return slt
@@ -112,7 +112,7 @@ func (slt *Selector) Having(sql string, args ...interface{}) *Selector {
 	slt.having.Where(sql, args)
 	return slt
 }
-func (slt *Selector) LeftJoin(table string, args ...interface{}) *Selector {
+func (slt *Selector) LeftJoin(table string, args ...any) *Selector {
 	table = strings.TrimSpace(table)
 	if table == "" {
 		return slt
@@ -125,7 +125,7 @@ func (slt *Selector) LeftJoin(table string, args ...interface{}) *Selector {
 	}
 	return slt
 }
-func (slt *Selector) RightJoin(table string, args ...interface{}) *Selector {
+func (slt *Selector) RightJoin(table string, args ...any) *Selector {
 	table = strings.TrimSpace(table)
 	if table == "" {
 		return slt
@@ -138,7 +138,7 @@ func (slt *Selector) RightJoin(table string, args ...interface{}) *Selector {
 	}
 	return slt
 }
-func (slt *Selector) InnerJoin(table string, args ...interface{}) *Selector {
+func (slt *Selector) InnerJoin(table string, args ...any) *Selector {
 	table = strings.TrimSpace(table)
 	if table == "" {
 		return slt
@@ -151,7 +151,7 @@ func (slt *Selector) InnerJoin(table string, args ...interface{}) *Selector {
 	}
 	return slt
 }
-func (slt *Selector) OuterJoin(table string, args ...interface{}) *Selector {
+func (slt *Selector) OuterJoin(table string, args ...any) *Selector {
 	table = strings.TrimSpace(table)
 	if table == "" {
 		return slt
@@ -164,7 +164,7 @@ func (slt *Selector) OuterJoin(table string, args ...interface{}) *Selector {
 	}
 	return slt
 }
-func (slt *Selector) FullJoin(table string, args ...interface{}) *Selector {
+func (slt *Selector) FullJoin(table string, args ...any) *Selector {
 	table = strings.TrimSpace(table)
 	if table == "" {
 		return slt
@@ -177,7 +177,7 @@ func (slt *Selector) FullJoin(table string, args ...interface{}) *Selector {
 	}
 	return slt
 }
-func (slt *Selector) JoinOn(sql string, args ...interface{}) *Selector {
+func (slt *Selector) JoinOn(sql string, args ...any) *Selector {
 	if slt.joins == nil {
 		return slt
 	}
@@ -189,7 +189,7 @@ func (slt *Selector) JoinOn(sql string, args ...interface{}) *Selector {
 	slt.joins.Add(sql, args...)
 	return slt
 }
-func (slt *Selector) Union(sql string, args ...interface{}) *Selector {
+func (slt *Selector) Union(sql string, args ...any) *Selector {
 	sql = strings.TrimSpace(sql)
 	if sql == "" {
 		return slt
@@ -205,7 +205,7 @@ func (slt *Selector) Union(sql string, args ...interface{}) *Selector {
 	slt.unions = append(slt.unions, frame)
 	return slt
 }
-func (slt *Selector) UnionAll(sql string, args ...interface{}) *Selector {
+func (slt *Selector) UnionAll(sql string, args ...any) *Selector {
 	sql = strings.TrimSpace(sql)
 	if sql == "" {
 		return slt
@@ -222,12 +222,13 @@ func (slt *Selector) UnionAll(sql string, args ...interface{}) *Selector {
 	return slt
 }
 
-/**
+/*
+*
 创建基础数据
 */
 func (slt *Selector) BuildSql(optimize bool) *Frame {
 	execSql := make([]string, 0)
-	argItems := make([]interface{}, 0)
+	argItems := make([]any, 0)
 	reg1, _ := regexp.Compile(`\s+`)
 	if reg1.MatchString(slt.table) || slt.joins != nil || slt.limit == "" || slt.groups != nil || slt.having != nil || slt.unions != nil {
 		optimize = false
@@ -313,7 +314,8 @@ func (slt *Selector) BuildSql(optimize bool) *Frame {
 	}
 }
 
-/**
+/*
+*
 创建用于查询数量的语句
 */
 func (slt *Selector) BuildCount() *Frame {
@@ -329,7 +331,7 @@ func (slt *Selector) BuildCount() *Frame {
 		return item
 	}
 	execSql := make([]string, 0)
-	argItems := make([]interface{}, 0)
+	argItems := make([]any, 0)
 	reg1, _ := regexp.Compile(`\s+`)
 	if reg1.MatchString(slt.table) {
 		execSql = append(execSql, "select count(1) as mCount from "+slt.table)
@@ -359,7 +361,8 @@ func (slt *Selector) BuildCount() *Frame {
 	}
 }
 
-/**
+/*
+*
 设置分页
 */
 func (slt *Selector) SetPage(page int, pageSize int) *Selector {
@@ -374,7 +377,8 @@ func (slt *Selector) SetPage(page int, pageSize int) *Selector {
 	return slt
 }
 
-/**
+/*
+*
 获取分页数据
 */
 func (slt *Selector) GetPageInfo() (*PageInfo, error) {
@@ -397,7 +401,8 @@ func (slt *Selector) GetPageInfo() (*PageInfo, error) {
 	return slt.PageInfo, nil
 }
 
-/**
+/*
+*
 获取分页列表
 */
 func (slt *Selector) PageList() ([]H, error) {
@@ -415,7 +420,8 @@ func (slt *Selector) PageList() ([]H, error) {
 	return slt.db.Query(item.Sql, item.Args...)
 }
 
-/**
+/*
+*
 获取数量
 */
 func (slt *Selector) GetCount() (int, error) {
@@ -430,7 +436,8 @@ func (slt *Selector) GetCount() (int, error) {
 	return count, nil
 }
 
-/**
+/*
+*
 获取查询结果
 */
 func (slt *Selector) GetList() ([]H, error) {

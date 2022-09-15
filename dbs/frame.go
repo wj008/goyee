@@ -11,11 +11,11 @@ import (
 
 type Frame struct {
 	Sql  string
-	Args []interface{}
+	Args []any
 	Typ  string
 }
 
-func NewFrame(sql string, typ string, args ...interface{}) *Frame {
+func NewFrame(sql string, typ string, args ...any) *Frame {
 	return &Frame{
 		Sql:  sql,
 		Args: args,
@@ -23,7 +23,7 @@ func NewFrame(sql string, typ string, args ...interface{}) *Frame {
 	}
 }
 
-func (frame *Frame) Add(sql string, args ...interface{}) *Frame {
+func (frame *Frame) Add(sql string, args ...any) *Frame {
 	frame.Sql += " " + strings.TrimSpace(sql)
 	if len(args) == 0 {
 		return frame
@@ -140,7 +140,7 @@ func escapeStringBackslash(buf []byte, v string) []byte {
 	return buf[:pos]
 }
 
-func Escape(query string, args ...interface{}) (string, error) {
+func Escape(query string, args ...any) (string, error) {
 	if strings.Count(query, "?") != len(args) {
 		return "", errors.New("number of ? should be same to len(args)")
 	}

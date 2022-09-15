@@ -10,8 +10,8 @@ import (
 	"time"
 )
 
-type H = map[string]interface{}
-type A = []interface{}
+type H = map[string]any
+type A = []any
 
 type DB struct {
 	*sql.DB
@@ -22,7 +22,7 @@ type Tx struct {
 
 var mainDb *DB
 
-func Raw(sql string, args ...interface{}) *Frame {
+func Raw(sql string, args ...any) *Frame {
 	return &Frame{
 		Sql:  sql,
 		Args: args,
@@ -30,7 +30,7 @@ func Raw(sql string, args ...interface{}) *Frame {
 	}
 }
 
-//Db 获取主数据库
+// Db 获取主数据库
 func Db() (*DB, error) {
 	if mainDb != nil {
 		return mainDb, nil
@@ -59,7 +59,7 @@ func Db() (*DB, error) {
 	return mainDb, nil
 }
 
-//TxBegin 事务开始
+// TxBegin 事务开始
 func TxBegin() (*Tx, error) {
 	db, err := Db()
 	if err != nil {
@@ -68,8 +68,8 @@ func TxBegin() (*Tx, error) {
 	return db.Begin()
 }
 
-//Query 查询多行
-func (db *DB) Query(sql string, args ...interface{}) ([]H, error) {
+// Query 查询多行
+func (db *DB) Query(sql string, args ...any) ([]H, error) {
 	rows, err := db.DB.Query(sql, args...)
 	if err != nil {
 		log.Println(sql, err.Error())
@@ -79,8 +79,8 @@ func (db *DB) Query(sql string, args ...interface{}) ([]H, error) {
 	return fetch(rows)
 }
 
-//QueryRow 查询1行
-func (db *DB) QueryRow(sql string, args ...interface{}) (H, error) {
+// QueryRow 查询1行
+func (db *DB) QueryRow(sql string, args ...any) (H, error) {
 	rows, err := db.DB.Query(sql, args...)
 	if err != nil {
 		return nil, err
@@ -95,11 +95,11 @@ func (db *DB) QueryRow(sql string, args ...interface{}) (H, error) {
 	return nil, nil
 }
 
-//Insert 插入数据集
+// Insert 插入数据集
 func (db *DB) Insert(table string, data H) (sql.Result, error) {
 	var names []string
 	var temps []string
-	var values []interface{}
+	var values []any
 	for key, value := range data {
 		names = append(names, "`"+key+"`")
 		switch value.(type) {
@@ -119,7 +119,7 @@ func (db *DB) Insert(table string, data H) (sql.Result, error) {
 	return db.Exec(sql, values...)
 }
 
-//InsertAndGetLastId 添加并返回最后的ID
+// InsertAndGetLastId 添加并返回最后的ID
 func (db *DB) InsertAndGetLastId(table string, data H) (sql.Result, int, error) {
 	tx, err := db.Begin()
 	if err != nil {
@@ -134,11 +134,11 @@ func (db *DB) InsertAndGetLastId(table string, data H) (sql.Result, int, error) 
 	return res, lastId, nil
 }
 
-//Replace 替换数据集
+// Replace 替换数据集
 func (db *DB) Replace(table string, data H) (sql.Result, error) {
 	var names []string
 	var temps []string
-	var values []interface{}
+	var values []any
 	for key, value := range data {
 		names = append(names, "`"+key+"`")
 		switch value.(type) {
@@ -158,11 +158,11 @@ func (db *DB) Replace(table string, data H) (sql.Result, error) {
 	return db.Exec(sql, values...)
 }
 
-//Update 更新数据集合
-func (db *DB) Update(table string, data H, where interface{}, args ...interface{}) (sql.Result, error) {
+// Update 更新数据集合
+func (db *DB) Update(table string, data H, where any, args ...any) (sql.Result, error) {
 	var names []string
-	var values []interface{}
-	var temps []interface{}
+	var values []any
+	var temps []any
 	whereSql := ""
 	switch where.(type) {
 	case int, int64, int32, uint32, uint64:
@@ -196,9 +196,9 @@ func (db *DB) Update(table string, data H, where interface{}, args ...interface{
 	return db.Exec(sql, values...)
 }
 
-//Delete 删除数据
-func (db *DB) Delete(table string, where interface{}, args ...interface{}) (sql.Result, error) {
-	var temps []interface{}
+// Delete 删除数据
+func (db *DB) Delete(table string, where any, args ...any) (sql.Result, error) {
+	var temps []any
 	whereSql := ""
 	switch where.(type) {
 	case int, int64, int32, uint32, uint64:
@@ -217,7 +217,7 @@ func (db *DB) Delete(table string, where interface{}, args ...interface{}) (sql.
 	return db.Exec(sql, temps...)
 }
 
-//Begin 开启事务
+// Begin 开启事务
 func (db *DB) Begin() (*Tx, error) {
 	tx, err := db.DB.Begin()
 	if err != nil {
@@ -227,7 +227,7 @@ func (db *DB) Begin() (*Tx, error) {
 	return ntx, nil
 }
 
-//Transaction 开启事务
+// Transaction 开启事务
 func (db *DB) Transaction(fn func(*Tx) error) (err error) {
 	tx, err := db.Begin()
 	if err != nil {
@@ -242,8 +242,8 @@ func (db *DB) Transaction(fn func(*Tx) error) (err error) {
 	return
 }
 
-//Query 查询多行
-func (tx *Tx) Query(sql string, args ...interface{}) ([]H, error) {
+// Query 查询多行
+func (tx *Tx) Query(sql string, args ...any) ([]H, error) {
 	rows, err := tx.Tx.Query(sql, args...)
 	if err != nil {
 		return nil, err
@@ -251,8 +251,8 @@ func (tx *Tx) Query(sql string, args ...interface{}) ([]H, error) {
 	return fetch(rows)
 }
 
-//QueryRow 查询1行
-func (tx *Tx) QueryRow(sql string, args ...interface{}) (H, error) {
+// QueryRow 查询1行
+func (tx *Tx) QueryRow(sql string, args ...any) (H, error) {
 	rows, err := tx.Tx.Query(sql, args...)
 	if err != nil {
 		return nil, err
@@ -267,7 +267,7 @@ func (tx *Tx) QueryRow(sql string, args ...interface{}) (H, error) {
 	return nil, nil
 }
 
-//LastInsertId 获得最后的Id
+// LastInsertId 获得最后的Id
 func (tx *Tx) LastInsertId() (int, error) {
 	rows, err := tx.Tx.Query("SELECT LAST_INSERT_ID()")
 	if err != nil {
@@ -283,11 +283,11 @@ func (tx *Tx) LastInsertId() (int, error) {
 	return 0, nil
 }
 
-//Insert 插入数据集
+// Insert 插入数据集
 func (tx *Tx) Insert(table string, data H) (sql.Result, error) {
 	var names []string
 	var temps []string
-	var values []interface{}
+	var values []any
 	for key, value := range data {
 		names = append(names, "`"+key+"`")
 		switch value.(type) {
@@ -307,7 +307,7 @@ func (tx *Tx) Insert(table string, data H) (sql.Result, error) {
 	return tx.Exec(sql, values...)
 }
 
-//InsertAndGetLastId 插入数据集并且返回最后的ID
+// InsertAndGetLastId 插入数据集并且返回最后的ID
 func (tx *Tx) InsertAndGetLastId(table string, data H) (sql.Result, int, error) {
 	res, err := tx.Insert(table, data)
 	if err != nil {
@@ -320,11 +320,11 @@ func (tx *Tx) InsertAndGetLastId(table string, data H) (sql.Result, int, error) 
 	return res, lastId, nil
 }
 
-//Replace 替换数据集
+// Replace 替换数据集
 func (tx *Tx) Replace(table string, data H) (sql.Result, error) {
 	var names []string
 	var temps []string
-	var values []interface{}
+	var values []any
 	for key, value := range data {
 		names = append(names, "`"+key+"`")
 		switch value.(type) {
@@ -345,11 +345,11 @@ func (tx *Tx) Replace(table string, data H) (sql.Result, error) {
 	return tx.Exec(sql, values...)
 }
 
-//Update 更新数据集合
-func (tx *Tx) Update(table string, data H, where interface{}, args ...interface{}) (sql.Result, error) {
+// Update 更新数据集合
+func (tx *Tx) Update(table string, data H, where any, args ...any) (sql.Result, error) {
 	var names []string
-	var values []interface{}
-	var temps []interface{}
+	var values []any
+	var temps []any
 	whereSql := ""
 	switch where.(type) {
 	case int, int64, int32, uint32, uint64:
@@ -383,9 +383,9 @@ func (tx *Tx) Update(table string, data H, where interface{}, args ...interface{
 	return tx.Exec(sql, values...)
 }
 
-//Delete 删除数据
-func (tx *Tx) Delete(table string, where interface{}, args ...interface{}) (sql.Result, error) {
-	var temps []interface{}
+// Delete 删除数据
+func (tx *Tx) Delete(table string, where any, args ...any) (sql.Result, error) {
+	var temps []any
 	whereSql := ""
 	switch where.(type) {
 	case int, int64, int32, uint32, uint64:
@@ -404,12 +404,12 @@ func (tx *Tx) Delete(table string, where interface{}, args ...interface{}) (sql.
 	return tx.Exec(sql, temps...)
 }
 
-//fetch 遍历数据
+// fetch 遍历数据
 func fetch(rows *sql.Rows) ([]H, error) {
 	defer rows.Close()
 	columns, err := rows.ColumnTypes()
 	columnLength := len(columns)
-	cache := make([]interface{}, columnLength)
+	cache := make([]any, columnLength)
 	if err != nil {
 		return nil, err
 	}
@@ -481,7 +481,7 @@ func fetch(rows *sql.Rows) ([]H, error) {
 				}
 				break
 			default:
-				item[key] = *data.(*interface{})
+				item[key] = *data.(*any)
 				break
 			}
 		}
