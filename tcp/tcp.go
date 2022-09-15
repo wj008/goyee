@@ -63,26 +63,6 @@ func NewConn(addr string) (conn *Conn, err error) {
 	return
 }
 
-//WriteMsg 写入消息
-func (c *Conn) WriteMsg(buffer []byte) (err error) {
-	l := 0
-	if buffer != nil {
-		l = len(buffer)
-	}
-	err = binary.Write(c, binary.LittleEndian, int32(l))
-	if err != nil {
-		return
-	}
-	if l == 0 {
-		return
-	}
-	if _, err = c.Write(buffer); err != nil {
-		c.Close()
-		return
-	}
-	return nil
-}
-
 func GzipEncode(data []byte) ([]byte, error) {
 	var buffer bytes.Buffer
 	writer, _ := gzip.NewWriterLevel(&buffer, gzip.BestCompression)
@@ -105,6 +85,27 @@ func GzipDecode(data []byte) ([]byte, error) {
 	return ioutil.ReadAll(reader)
 }
 
+//WriteMsg 写入消息
+func (c *Conn) WriteMsg(buffer []byte) (err error) {
+	l := 0
+	if buffer != nil {
+		l = len(buffer)
+	}
+	err = binary.Write(c, binary.LittleEndian, uint32(l))
+	if err != nil {
+		return
+	}
+	if l == 0 {
+		return
+	}
+	if _, err = c.Write(buffer); err != nil {
+		c.Close()
+		return
+	}
+	return nil
+}
+
+//WriteZip 压缩并写入消息
 func (c *Conn) WriteZip(data []byte) (err error) {
 	if data == nil {
 		c.WriteMsg(data)
@@ -118,42 +119,47 @@ func (c *Conn) WriteZip(data []byte) (err error) {
 	return
 }
 
-//ReadMsg 读取消息
-func (c *Conn) ReadMsg() (buffer []byte, err error) {
-	var sz int32
-	err = binary.Read(c, binary.LittleEndian, &sz)
-	if err != nil {
-		return
-	}
-	iz := int(sz)
-	if iz == 0 {
-		buffer = make([]byte, 0)
-		return
-	}
-	buffer = make([]byte, iz)
-	temp := buffer[0:iz]
+//readBytes 读取套接字字节
+func (c *Conn) readBytes(length int) ([]byte, error) {
+	end := length
+	buffer := make([]byte, length)
+	temp := buffer[0:end]
 	reTry := 0
 	nLen := 0
 	for {
 		reTry++
-		if reTry > 1000 {
-			err = errors.New(fmt.Sprintf("Expected to read %d bytes, but only read %d", sz, nLen))
-			return
+		if reTry > 100 {
+			err := errors.New(fmt.Sprintf("Expected to read %d bytes, but only read %d", length, nLen))
+			return nil, err
 		}
 		n, err1 := c.Read(temp)
 		if err1 != nil {
-			err = err1
-			return
+			return nil, err1
 		}
 		nLen += n
-		if n < iz {
-			temp = buffer[n:iz]
-			iz = iz - n
+		if n < end {
+			temp = buffer[n:end]
+			end = end - n
 			continue
 		} else {
 			break
 		}
 	}
+	return buffer, nil
+}
+
+//ReadMsg 读取消息
+func (c *Conn) ReadMsg() (buffer []byte, err error) {
+	lenBytes, err2 := c.readBytes(4)
+	if err2 != nil {
+		return nil, err2
+	}
+	iz := int(binary.LittleEndian.Uint32(lenBytes))
+	if iz == 0 {
+		buffer = make([]byte, 0)
+		return
+	}
+	buffer, err = c.readBytes(iz)
 	return
 }
 
