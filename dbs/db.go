@@ -1,6 +1,7 @@
 package dbs
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	_ "github.com/go-sql-driver/mysql"
@@ -15,9 +16,11 @@ type A = []any
 
 type DB struct {
 	*sql.DB
+	prefix string
 }
 type Tx struct {
 	*sql.Tx
+	prefix string
 }
 
 var mainDb *DB
@@ -43,6 +46,7 @@ func Db() (*DB, error) {
 	charset := config.String("db_charset", "utf8")
 	maxLifetime := config.Int("db_max_lifetime", 100)
 	poolSize := config.Int("db_pool_size", 1)
+	prefix := config.String("db_prefix", "")
 	path := strings.Join([]string{userName, ":", password, "@tcp(", host, ":", port, ")/", dbName, "?charset=", charset, "&parseTime=True"}, "")
 	db, _ := sql.Open("mysql", path)
 	//设置数据库超时时间
@@ -55,7 +59,7 @@ func Db() (*DB, error) {
 		log.Println("打开数据库失败", err.Error())
 		return nil, err
 	}
-	mainDb = &DB{DB: db}
+	mainDb = &DB{DB: db, prefix: prefix}
 	return mainDb, nil
 }
 
@@ -68,20 +72,59 @@ func TxBegin() (*Tx, error) {
 	return db.Begin()
 }
 
+// Exec 执行代码
+func (db *DB) Exec(query string, args ...any) (sql.Result, error) {
+	query = strings.Replace(query, "@pf_", db.prefix, -1)
+	return db.DB.Exec(query, args...)
+}
+
+// ExecContext 执行代码
+func (db *DB) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	query = strings.Replace(query, "@pf_", db.prefix, -1)
+	return db.DB.ExecContext(ctx, query, args...)
+}
+
 // Query 查询多行
-func (db *DB) Query(sql string, args ...any) ([]H, error) {
-	rows, err := db.DB.Query(sql, args...)
+func (db *DB) Query(query string, args ...any) ([]H, error) {
+	query = strings.Replace(query, "@pf_", db.prefix, -1)
+	rows, err := db.DB.Query(query, args...)
 	if err != nil {
-		log.Println(sql, err.Error())
-		log.Println(args...)
+		return nil, err
+	}
+	return fetch(rows)
+}
+
+// QueryContext 带有上下文查询多行
+func (db *DB) QueryContext(ctx context.Context, query string, args ...any) ([]H, error) {
+	query = strings.Replace(query, "@pf_", db.prefix, -1)
+	rows, err := db.DB.QueryContext(ctx, query, args...)
+	if err != nil {
 		return nil, err
 	}
 	return fetch(rows)
 }
 
 // QueryRow 查询1行
-func (db *DB) QueryRow(sql string, args ...any) (H, error) {
-	rows, err := db.DB.Query(sql, args...)
+func (db *DB) QueryRow(query string, args ...any) (H, error) {
+	query = strings.Replace(query, "@pf_", db.prefix, -1)
+	rows, err := db.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	list, err := fetch(rows)
+	if err != nil {
+		return nil, err
+	}
+	if len(list) > 0 {
+		return list[0], nil
+	}
+	return nil, nil
+}
+
+// QueryRowContext 带有上下文查询1行
+func (db *DB) QueryRowContext(ctx context.Context, query string, args ...any) (H, error) {
+	query = strings.Replace(query, "@pf_", db.prefix, -1)
+	rows, err := db.DB.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -224,6 +267,7 @@ func (db *DB) Begin() (*Tx, error) {
 		return nil, err
 	}
 	ntx := &Tx{Tx: tx}
+	ntx.prefix = db.prefix
 	return ntx, nil
 }
 
@@ -242,9 +286,30 @@ func (db *DB) Transaction(fn func(*Tx) error) (err error) {
 	return
 }
 
+func (tx *Tx) Exec(query string, args ...any) (sql.Result, error) {
+	query = strings.Replace(query, "@pf_", tx.prefix, -1)
+	return tx.Tx.Exec(query, args...)
+}
+
+func (tx *Tx) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	query = strings.Replace(query, "@pf_", tx.prefix, -1)
+	return tx.Tx.ExecContext(ctx, query, args...)
+}
+
 // Query 查询多行
-func (tx *Tx) Query(sql string, args ...any) ([]H, error) {
-	rows, err := tx.Tx.Query(sql, args...)
+func (tx *Tx) Query(query string, args ...any) ([]H, error) {
+	query = strings.Replace(query, "@pf_", tx.prefix, -1)
+	rows, err := tx.Tx.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	return fetch(rows)
+}
+
+// QueryContext 查询多行
+func (tx *Tx) QueryContext(ctx context.Context, query string, args ...any) ([]H, error) {
+	query = strings.Replace(query, "@pf_", tx.prefix, -1)
+	rows, err := tx.Tx.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -252,8 +317,26 @@ func (tx *Tx) Query(sql string, args ...any) ([]H, error) {
 }
 
 // QueryRow 查询1行
-func (tx *Tx) QueryRow(sql string, args ...any) (H, error) {
-	rows, err := tx.Tx.Query(sql, args...)
+func (tx *Tx) QueryRow(query string, args ...any) (H, error) {
+	query = strings.Replace(query, "@pf_", tx.prefix, -1)
+	rows, err := tx.Tx.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	list, err := fetch(rows)
+	if err != nil {
+		return nil, err
+	}
+	if len(list) > 0 {
+		return list[0], nil
+	}
+	return nil, nil
+}
+
+// QueryRowContext 查询1行
+func (tx *Tx) QueryRowContext(ctx context.Context, query string, args ...any) (H, error) {
+	query = strings.Replace(query, "@pf_", tx.prefix, -1)
+	rows, err := tx.Tx.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
