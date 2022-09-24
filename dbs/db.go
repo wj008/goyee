@@ -415,27 +415,23 @@ func fetch(rows *sql.Rows) ([]H, error) {
 	}
 	for index, column := range columns {
 		typeName := column.DatabaseTypeName()
-		if typeName == "INT" ||
-			typeName == "TINYINT" ||
-			typeName == "INTEGER" ||
-			typeName == "BIGINT" ||
-			typeName == "SMALLINT" ||
-			typeName == "MEDIUMINT" {
+		switch typeName {
+		case "INT", "TINYINT", "INTEGER", "BIGINT", "SMALLINT", "MEDIUMINT":
 			var a sql.NullInt64
 			cache[index] = &a
-		} else if typeName == "FLOAT" ||
-			typeName == "DOUBLE" ||
-			typeName == "DECIMAL" {
+			break
+		case "FLOAT", "DOUBLE", "DECIMAL":
 			var a sql.NullFloat64
 			cache[index] = &a
-		} else if typeName == "SMALLDATETIME" ||
-			typeName == "DATETIME" ||
-			typeName == "DATE" {
+			break
+		case "SMALLDATETIME", "DATETIME", "DATE":
 			var a sql.NullTime
 			cache[index] = &a
-		} else {
+			break
+		default:
 			var a sql.NullString
 			cache[index] = &a
+			break
 		}
 	}
 	list := make([]H, 0)
