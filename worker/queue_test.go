@@ -12,7 +12,7 @@ func TestNewQueue(t *testing.T) {
 		log.Println(post...)
 	})
 	for i := 0; i < 100; i++ {
-		queue.Add(i)
+		queue.Add(i, i)
 	}
 	queue.Wait()
 }
