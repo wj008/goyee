@@ -6,20 +6,19 @@ import (
 
 type Queue struct {
 	wg  sync.WaitGroup
-	job chan any
+	job chan []any
 }
 
-func NewQueue(workerCount int, fn func(any)) *Queue {
+func NewQueue(workerCount int, fn func(...any)) *Queue {
 	q := &Queue{
-		job: make(chan any, workerCount),
+		job: make(chan []any, workerCount),
 	}
-	worker := func(jobChan <-chan any, workId int) {
+	worker := func(jobChan <-chan []any, workId int) {
 		q.wg.Add(1)
 		defer q.wg.Done()
 		for value := range jobChan {
 			if fn != nil {
-				fn(value)
-				//log.Println("success:workId", workId)
+				fn(value...)
 			}
 		}
 	}
@@ -30,7 +29,7 @@ func NewQueue(workerCount int, fn func(any)) *Queue {
 }
 
 // Add 添加函数值
-func (q *Queue) Add(value any) {
+func (q *Queue) Add(value ...any) {
 	q.job <- value
 }
 

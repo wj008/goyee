@@ -7,9 +7,9 @@ import (
 )
 
 func TestNewQueue(t *testing.T) {
-	queue := NewQueue(10, func(post any) {
+	queue := NewQueue(10, func(post ...any) {
 		time.Sleep(1 * time.Second)
-		log.Println(post)
+		log.Println(post...)
 	})
 	for i := 0; i < 100; i++ {
 		queue.Add(i)
