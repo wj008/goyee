@@ -65,9 +65,9 @@ func NewConn(addr string) (conn *Conn, err error) {
 
 func GzipEncode(data []byte) ([]byte, error) {
 	var buffer bytes.Buffer
-	writer, _ := gzip.NewWriterLevel(&buffer, gzip.BestCompression)
+	writer := gzip.NewWriter(&buffer)
+	defer writer.Close()
 	_, err := writer.Write(data)
-	writer.Close()
 	if err != nil {
 		return nil, err
 	}
