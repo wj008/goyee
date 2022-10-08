@@ -122,30 +122,27 @@ func (c *Conn) WriteZip(data []byte) (err error) {
 // readBytes 读取套接字字节
 func (c *Conn) readBytes(length int) ([]byte, error) {
 	end := length
-	buffer := make([]byte, length)
-	temp := buffer[0:end]
+	temp := make([]byte, length)
+	buffer := make([]byte, 0)
 	reTry := 0
 	nLen := 0
 	for {
 		reTry++
-		if reTry > 100 {
-			err := errors.New(fmt.Sprintf("Expected to read %d bytes, but only read %d", length, nLen))
+		if reTry > 10000 {
+			return nil, errors.New(fmt.Sprintf("Expected to read %d bytes, but only read %d", length, nLen))
+		}
+		n, err := c.Read(temp)
+		if err != nil {
 			return nil, err
 		}
-		n, err1 := c.Read(temp)
-		if err1 != nil {
-			return nil, err1
-		}
+		buffer = append(buffer, temp[:n]...)
 		nLen += n
-		if n < end {
-			temp = buffer[n:end]
-			end = end - n
-			continue
-		} else {
-			break
+		if n >= end {
+			return buffer, nil
 		}
+		temp = temp[n:end]
+		end = end - n
 	}
-	return buffer, nil
 }
 
 // ReadMsg 读取消息
@@ -173,7 +170,7 @@ func (c *Conn) OnData(f func(data []byte)) {
 				c.Close()
 				return
 			}
-			go f(data)
+			f(data)
 		}
 	}()
 }
@@ -189,15 +186,15 @@ func (c *Conn) OnDataZip(f func(data []byte)) {
 				return
 			}
 			if len(data) == 0 {
-				go f(data)
+				f(data)
 				continue
 			}
-			data, err = GzipDecode(data)
+			buf, err := GzipDecode(data)
 			if err != nil {
 				log.Println(err)
 				continue
 			}
-			go f(data)
+			f(buf)
 		}
 	}()
 }
