@@ -7,7 +7,7 @@ import (
 )
 
 func TestGzip(t *testing.T) {
-	s := "你好，我是中国人,你好，我是中国人,你好，我是中国人，你好，我是中国人，你好，我是中国人，你好，我是中国人"
+	s := "{\"kind\":0,\"deviceNo\":\"ELPOTEC-Q-0005\",\"deviceType\":\"s7\",\"version\":\"\",\"data\":\"a11112222\"}"
 	b, _ := GzipEncode([]byte(s))
 	u, _ := GzipDecode(b)
 	log.Println("OUT" + string(u))

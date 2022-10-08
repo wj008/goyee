@@ -6,7 +6,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 )
@@ -66,11 +66,11 @@ func NewConn(addr string) (conn *Conn, err error) {
 func GzipEncode(data []byte) ([]byte, error) {
 	var buffer bytes.Buffer
 	writer := gzip.NewWriter(&buffer)
-	defer writer.Close()
 	_, err := writer.Write(data)
 	if err != nil {
 		return nil, err
 	}
+	writer.Close()
 	writer.Flush()
 	out := buffer.Bytes()
 	return out, nil
@@ -82,7 +82,7 @@ func GzipDecode(data []byte) ([]byte, error) {
 		return nil, err
 	}
 	defer reader.Close()
-	return ioutil.ReadAll(reader)
+	return io.ReadAll(reader)
 }
 
 // WriteMsg 写入消息
