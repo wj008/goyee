@@ -124,11 +124,15 @@ func (c *Conn) readBytes(length int) ([]byte, error) {
 	end := length
 	temp := make([]byte, length)
 	buffer := make([]byte, 0)
-	reTry := 0
+	try := 0
 	nLen := 0
+	maxTry := length / 100
+	if maxTry < 10 {
+		maxTry = 10
+	}
 	for {
-		reTry++
-		if reTry > 10000 {
+		try++
+		if try > maxTry {
 			return nil, errors.New(fmt.Sprintf("Expected to read %d bytes, but only read %d", length, nLen))
 		}
 		n, err := c.Read(temp)
