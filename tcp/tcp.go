@@ -13,9 +13,10 @@ import (
 
 type Conn struct {
 	net.Conn
-	Context   any
-	IsConnect bool
-	closeFunc func()
+	Context    any
+	MaxReadLen int
+	IsConnect  bool
+	closeFunc  func()
 }
 
 type Server struct {
@@ -121,6 +122,9 @@ func (c *Conn) WriteZip(data []byte) (err error) {
 
 // readBytes 读取套接字字节
 func (c *Conn) readBytes(length int) ([]byte, error) {
+	if length > c.MaxReadLen {
+		return nil, errors.New(fmt.Sprintf("Expected to read %d bytes, but only max read %d", length, c.MaxReadLen))
+	}
 	temp := make([]byte, length)
 	buffer := make([]byte, 0)
 	maxTry := length / 100
@@ -160,6 +164,9 @@ func (c *Conn) ReadMsg() (buffer []byte, err error) {
 
 // OnData 读取消息
 func (c *Conn) OnData(f func(data []byte)) {
+	if c.MaxReadLen == 0 {
+		c.MaxReadLen = 64 * 1024 //64k
+	}
 	go func() {
 		for {
 			data, err := c.ReadMsg()
@@ -215,7 +222,7 @@ func wrapConn(conn net.Conn) *Conn {
 	case *Conn:
 		return c
 	case *net.TCPConn:
-		return &Conn{conn, nil, true, nil}
+		return &Conn{conn, nil, 65536, true, nil}
 	}
 	return nil
 }
