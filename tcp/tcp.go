@@ -182,6 +182,9 @@ func (c *Conn) OnData(f func(data []byte)) {
 
 // OnDataZip 读取消息
 func (c *Conn) OnDataZip(f func(data []byte)) {
+	if c.MaxReadLen == 0 {
+		c.MaxReadLen = 64 * 1024 //64k
+	}
 	go func() {
 		for {
 			data, err := c.ReadMsg()
