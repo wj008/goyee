@@ -3,6 +3,7 @@ package tcp
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -20,24 +21,34 @@ type Conn struct {
 }
 
 type Server struct {
-	net.Addr
+	net.Listener
 	Connes chan *Conn
+	ctx    context.Context
+	cancel func()
 }
 
-// NewServer 创建服务
-func NewServer(addr string) (serv *Server, err error) {
-	listener, err := net.Listen("tcp", addr)
+func NewTcpServer(network, addr string) (serv *Server, err error) {
+	listener, err := net.Listen(network, addr)
 	if err != nil {
 		return
 	}
+	ctx, cancel := context.WithCancel(context.Background())
 	serv = &Server{
-		Addr:   listener.Addr(),
-		Connes: make(chan *Conn),
+		Listener: listener,
+		Connes:   make(chan *Conn),
+		ctx:      ctx,
+		cancel:   cancel,
 	}
 	go func() {
 		for {
-			rawConn, err2 := listener.Accept()
-			if err2 != nil {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+
+			}
+			rawConn, err := listener.Accept()
+			if err != nil {
 				continue
 			}
 			c := wrapConn(rawConn)
@@ -47,6 +58,11 @@ func NewServer(addr string) (serv *Server, err error) {
 	return
 }
 
+// NewServer 创建服务
+func NewServer(addr string) (serv *Server, err error) {
+	return NewTcpServer("tcp", addr)
+}
+
 // OnConnect 链接进入
 func (serv *Server) OnConnect(f func(c *Conn)) {
 	for c := range serv.Connes {
@@ -54,9 +70,20 @@ func (serv *Server) OnConnect(f func(c *Conn)) {
 	}
 }
 
+// Close 关闭链接
+func (serv *Server) Close() error {
+	close(serv.Connes)
+	serv.cancel()
+	return serv.Listener.Close()
+}
+
 // NewConn 创建客户端链接
 func NewConn(addr string) (conn *Conn, err error) {
-	rawConn, err := net.Dial("tcp", addr)
+	return NewTcpConn("tcp", addr)
+}
+
+func NewTcpConn(network, addr string) (conn *Conn, err error) {
+	rawConn, err := net.Dial(network, addr)
 	if err != nil {
 		return
 	}
