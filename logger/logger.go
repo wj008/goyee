@@ -36,9 +36,11 @@ type Logger struct{}
 func (n *Logger) LPrint(level int, v ...any) {
 	LPrint(level, v...)
 }
+
 func (n *Logger) LPrintln(level int, v ...any) {
 	LPrintln(level, v...)
 }
+
 func (n *Logger) LPrintf(level int, format string, v ...any) {
 	LPrintf(level, format, v...)
 }
