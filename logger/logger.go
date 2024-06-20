@@ -21,6 +21,8 @@ const (
 	LstdFlags     = log.LstdFlags     // initial values for the standard logger
 )
 
+var Debug = config.Int("debug", 0)
+
 type LogSet struct {
 	Template string
 	LogFile  string
@@ -31,27 +33,30 @@ var lm *LogSet = nil
 
 type Logger struct{}
 
-func (n *Logger) Log(v ...any) {
-	Log(v...)
+func (n *Logger) LPrint(level int, v ...any) {
+	LPrint(level, v...)
+}
+func (n *Logger) LPrintln(level int, v ...any) {
+	LPrintln(level, v...)
+}
+func (n *Logger) LPrintf(level int, format string, v ...any) {
+	LPrintf(level, format, v...)
 }
 
-func (n *Logger) Logf(format string, v ...any) {
-	Logf(format, v...)
-}
-
-var (
-	Debug = config.Bool("debug", true)
-)
-
-func Log(v ...any) {
-	if Debug {
+func LPrint(level int, v ...any) {
+	if Debug >= level {
 		Output(2, fmt.Sprintln(v...))
 	}
 }
 
-// Logf logs formatted using the default logger
-func Logf(format string, v ...any) {
-	if Debug {
+func LPrintln(level int, v ...any) {
+	if Debug >= level {
+		Output(2, fmt.Sprintln(v...))
+	}
+}
+
+func LPrintf(level int, format string, v ...any) {
+	if Debug >= level {
 		Output(2, fmt.Sprintf(format, v...))
 	}
 }
